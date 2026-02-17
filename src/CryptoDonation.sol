@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.33;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 error Donate__InvalidAddress();
 error Donate__DonationMustBeGreaterThanZero();
@@ -9,8 +11,9 @@ error Donate__DonateFailed();
 error Donate__MaxMessageLimitReached();
 error Withdraw__ZeroBalance();
 error Withdraw__WithdrawFailed();
+error Receive__DirectTransferNotAllowed();
 
-contract CryptoDonation is Ownable {
+contract CryptoDonation is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     struct DonationHistory {
         address from;
         address to;
@@ -24,13 +27,20 @@ contract CryptoDonation is Ownable {
     mapping(address => DonationHistory[]) private donationsBySender;
     mapping(address => DonationHistory[]) private donationsByReceiver;
 
+    uint256[50] private __gap;
+
     event Donate(address indexed from, address indexed to, uint256 indexed amount, string message);
     event Withdraw(address indexed from, address indexed to, uint256 indexed amount);
 
-    event ReceiveCalled(address indexed from, uint256 indexed amount);
-    event FallbackCalled(address indexed from, uint256 indexed amount, bytes data);
+    constructor() {
+        _disableInitializers();
+    }
 
-    constructor() Ownable(msg.sender) {}
+    function initialize() public initializer {
+        __Ownable_init(msg.sender);
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal view override onlyOwner {}
 
     function withdraw(address to) external onlyOwner {
         if (address(this).balance == 0) revert Withdraw__ZeroBalance();
@@ -75,10 +85,6 @@ contract CryptoDonation is Ownable {
     }
 
     receive() external payable {
-        emit ReceiveCalled(msg.sender, msg.value);
-    }
-
-    fallback() external payable {
-        emit FallbackCalled(msg.sender, msg.value, msg.data);
+        revert Receive__DirectTransferNotAllowed();
     }
 }

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
@@ -64,3 +65,7 @@ $ forge --help
 $ anvil --help
 $ cast --help
 ```
+=======
+# crypto-donation
+A decentralized donation system with an embeddable JS widget.
+>>>>>>> d862d29eae054481d86a8d334b55fd1f3ac33e10
